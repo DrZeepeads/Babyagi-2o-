@@ -115,6 +115,39 @@ python main.py
 
 Ensure that the model you select supports tool/function calling. Not all models may have this capability. Refer to the `litellm` documentation or the model provider's documentation to confirm.
 
+## Deploying to Render
+
+You can run BabyAGI 2o as a fully managed web service on [Render](https://render.com).  
+The repository includes a **`render.yaml`** blueprint that describes everything Render needs to build and start the service.
+
+```yaml
+services:
+  - type: web
+    name: ai-task-automation
+    env: python
+    buildCommand: pip install -r requirements.txt  # or inline list of packages
+    startCommand: python main.py
+    envVars:
+      - key: LITELLM_MODEL
+        value: gpt-4
+      - key: OPENAI_API_KEY
+        sync: false        # mark secret so you can add it in the dashboard
+      - key: DEFAULT_TASK
+        value: "Say hello from BabyAGI 2o!"
+```
+
+### How it works
+
+1. **Create a new Web Service** on Render and point it at your GitHub repository.  
+2. Render reads `render.yaml`, installs the dependencies, and runs `python main.py`.  
+3. Because Render’s build/production environment is **non-interactive**, `main.py` automatically detects that `stdin` is not a TTY and falls back to the value of the `DEFAULT_TASK` environment variable instead of waiting for user input.  
+4. Logs and deploy status are available in the Render dashboard. If something goes wrong, consult Render’s [Troubleshooting Your Deploy](https://render.com/docs/troubleshooting-deploys) guide.
+
+### About `DEFAULT_TASK`
+
+`DEFAULT_TASK` provides the initial prompt when no terminal is present (for example, during automated deploys).  
+You can change its value in the Render dashboard or in `render.yaml` to control what BabyAGI 2o does after each deploy.
+
 ## Usage
 
 1. **Run the Application**

@@ -2,6 +2,16 @@ import os, json, traceback, subprocess, sys
 from time import sleep
 from litellm import completion
 
+# Utility
+def is_interactive() -> bool:
+    """
+    Returns True when the current process is connected to an interactive
+    terminal (i.e. stdin is a TTY).  In managed hosting providers such as
+    Render this will generally be False, so we can avoid blocking `input()`
+    calls that would otherwise raise EOFError.
+    """
+    return sys.stdin.isatty()
+
 # ANSI escape codes for color and formatting
 class Colors:
     HEADER = '\033[95m'; OKBLUE = '\033[94m'; OKCYAN = '\033[96m'; OKGREEN = '\033[92m'
@@ -171,4 +181,22 @@ def run_main_loop(user_input):
     print(f"{Colors.WARNING}{Colors.BOLD}Max iterations reached or task completed.{Colors.ENDC}")
 
 if __name__ == "__main__":
-    run_main_loop(input(f"{Colors.BOLD}Describe the task you want to complete: {Colors.ENDC}"))
+    if is_interactive():
+        # Local / interactive execution
+        try:
+            user_task = input(f"{Colors.BOLD}Describe the task you want to complete: {Colors.ENDC}")
+        except EOFError:
+            # Fallback if something goes unexpectedly wrong
+            user_task = ""
+    else:
+        # Non-interactive environment (e.g. Render).  Use env var or default.
+        user_task = os.environ.get(
+            "DEFAULT_TASK",
+            "No interactive terminal available – running with default task."
+        )
+        print(
+            f"{Colors.WARNING}{Colors.BOLD}Non-interactive environment detected."
+            f"{Colors.ENDC} Using task: \"{user_task}\""
+        )
+
+    run_main_loop(user_task)

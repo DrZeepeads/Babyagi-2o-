@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: ai-task-automation
+    env: python
+    plan: free
+    # Install all dependencies listed in requirements.txt
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: LITELLM_MODEL
+        value: gpt-4
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_API_BASE
+        value: https://inference.samaira.ai/openai
+      # DEFAULT_TASK is used when the app runs in a non-interactive
+      # environment (e.g., Render) and no stdin is available.  Change
+      # this value to control the agent’s initial prompt after deploy.
+      - key: DEFAULT_TASK
+        value: "Create a simple web scraper that extracts headlines from news websites and summarizes them."
+      - key: PYTHON_VERSION
+        value: 3.11.0
+    healthCheckPath: /
